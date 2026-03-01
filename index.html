@@ -643,6 +643,68 @@
                 pointer-events: none;
             }
 
+            /* Killer cheatsheet */
+            .killer-cheatsheet {
+                margin-top: 16px;
+                border-top: 1px solid var(--border);
+                padding-top: 14px;
+            }
+            .killer-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+                gap: 8px;
+            }
+            .killer-header p {
+                text-align: left !important;
+                font-size: 0.75rem;
+                color: #f59e0b;
+                font-weight: 700;
+                margin: 0;
+            }
+            .killer-subtitle {
+                color: var(--text-dim);
+                font-weight: 500;
+            }
+            .killer-add-all {
+                padding: 5px 14px !important;
+                border-radius: 8px !important;
+                border: 1.5px solid rgba(245, 158, 11, 0.4) !important;
+                background: rgba(245, 158, 11, 0.1) !important;
+                color: #f59e0b !important;
+                font-size: 0.72rem !important;
+                font-family: inherit;
+                font-weight: 600 !important;
+                cursor: pointer;
+                transition: all 0.2s;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            .killer-add-all:hover {
+                background: rgba(245, 158, 11, 0.25) !important;
+                border-color: #f59e0b !important;
+            }
+            .killer-tier {
+                margin-bottom: 10px;
+            }
+            .killer-tier-head {
+                font-size: 0.73rem;
+                font-weight: 700;
+                color: var(--text);
+                margin-bottom: 6px;
+                text-align: left;
+            }
+            .killer-tier-desc {
+                font-weight: 400;
+                color: var(--text-dim);
+            }
+            .killer-sug .killer-count {
+                font-size: 0.62rem;
+                opacity: 0.5;
+                margin-left: 2px;
+            }
+
             /* Trap match indicator on word items */
             .trap-match {
                 font-size: 0.7rem;
@@ -844,9 +906,64 @@
                 { suffix: "nz", label: "nz — hampir impossible" },
             ];
 
+            // Killer suffix cheatsheet — validated from killer words database
+            const KILLER_CHEATSHEET = [
+                {
+                    tier: "🔴 Mustahil",
+                    desc: "Lawan hampir ga bisa nyambung",
+                    suffixes: [
+                        { suffix: "ix", count: 0 },
+                        { suffix: "ax", count: 0 },
+                        { suffix: "ux", count: 0 },
+                        { suffix: "iks", count: 0 },
+                        { suffix: "iat", count: 3 },
+                        { suffix: "if", count: 5 },
+                        { suffix: "ks", count: 6 },
+                        { suffix: "ex", count: 6 },
+                        { suffix: "tif", count: 6 },
+                        { suffix: "nia", count: 7 },
+                        { suffix: "mia", count: 9 },
+                        { suffix: "sif", count: 10 },
+                    ],
+                },
+                {
+                    tier: "🟠 Susah",
+                    desc: "Pilihan lawan sangat terbatas",
+                    suffixes: [
+                        { suffix: "ia", count: 11 },
+                        { suffix: "lia", count: 12 },
+                        { suffix: "ria", count: 15 },
+                        { suffix: "bia", count: 30 },
+                        { suffix: "sia", count: 37 },
+                        { suffix: "aks", count: 41 },
+                    ],
+                },
+                {
+                    tier: "🟡 Tricky",
+                    desc: "Masih bisa tapi bikin mikir keras",
+                    suffixes: [
+                        { suffix: "ik", count: 65 },
+                        { suffix: "is", count: 190 },
+                    ],
+                },
+            ];
+
             function showTrapDialog() {
                 const overlay = document.createElement("div");
                 overlay.className = "confirm-overlay";
+                const killerHtml = KILLER_CHEATSHEET.map((tier) => {
+                    const btns = tier.suffixes
+                        .map((s) => {
+                            const already = trapSuffixes.includes(s.suffix);
+                            return `<button class="trap-sug-btn killer-sug${already ? " already" : ""}" title="${s.count} kata bisa nyambung" onclick="addTrapSuffix('${s.suffix}')">${s.suffix} <span class="killer-count">${s.count}</span></button>`;
+                        })
+                        .join("");
+                    return `<div class="killer-tier">
+                        <div class="killer-tier-head">${tier.tier} <span class="killer-tier-desc">— ${tier.desc}</span></div>
+                        <div class="trap-sug-list">${btns}</div>
+                    </div>`;
+                }).join("");
+
                 overlay.innerHTML = `
         <div class="confirm-box trap-dialog">
           <h3>🪤 Atur Trap Suffixes</h3>
@@ -860,6 +977,13 @@
           <div class="trap-suggestions">
             <p>💡 Saran suffix jebakan:</p>
             <div class="trap-sug-list" id="trapSugList"></div>
+          </div>
+          <div class="killer-cheatsheet">
+            <div class="killer-header">
+              <p>💀 Killer Cheatsheet <span class="killer-subtitle">— angka = kata yang bisa nyambung (makin kecil makin mematikan)</span></p>
+              <button class="killer-add-all" onclick="addAllKillerSuffixes()">Tambah semua 💀</button>
+            </div>
+            ${killerHtml}
           </div>
           <div class="btn-row">
             <button class="cancel-btn" onclick="this.closest('.confirm-overlay').remove()">Tutup</button>
@@ -937,6 +1061,7 @@
                     saveTraps();
                     renderTrapTags();
                     renderTrapSuggestions();
+                    renderKillerSuggestions();
                     if (currentQuery.trim()) renderResults();
                 }
                 input.value = "";
@@ -949,6 +1074,7 @@
                 saveTraps();
                 renderTrapTags();
                 renderTrapSuggestions();
+                renderKillerSuggestions();
                 if (currentQuery.trim()) renderResults();
             }
 
@@ -957,6 +1083,7 @@
                 saveTraps();
                 renderTrapTags();
                 renderTrapSuggestions();
+                renderKillerSuggestions();
                 if (currentQuery.trim()) renderResults();
             }
 
@@ -965,7 +1092,37 @@
                 saveTraps();
                 renderTrapTags();
                 renderTrapSuggestions();
+                renderKillerSuggestions();
                 if (currentQuery.trim()) renderResults();
+            }
+
+            function addAllKillerSuffixes() {
+                let added = 0;
+                for (const tier of KILLER_CHEATSHEET) {
+                    for (const s of tier.suffixes) {
+                        if (!trapSuffixes.includes(s.suffix)) {
+                            trapSuffixes.push(s.suffix);
+                            added++;
+                        }
+                    }
+                }
+                if (added > 0) {
+                    saveTraps();
+                    renderTrapTags();
+                    renderTrapSuggestions();
+                    renderKillerSuggestions();
+                    if (currentQuery.trim()) renderResults();
+                }
+            }
+
+            function renderKillerSuggestions() {
+                document.querySelectorAll(".killer-sug").forEach((btn) => {
+                    const suffix = btn.textContent.trim().split(/\s/)[0];
+                    btn.classList.toggle(
+                        "already",
+                        trapSuffixes.includes(suffix),
+                    );
+                });
             }
 
             // --- Persistence ---
